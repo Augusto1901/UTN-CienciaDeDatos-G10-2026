@@ -1,6 +1,6 @@
 # 05 — Preguntas y Respuestas tipo examen
 
-> 28 preguntas. Las respuestas citan la evidencia. Las preguntas "por qué" se responden con la **causa real**, no con una descripción.
+> 31 preguntas. Las respuestas citan la evidencia. Las preguntas "por qué" se responden con la **causa real**, no con una descripción.
 
 ---
 
@@ -80,25 +80,31 @@ No. Ya existían en el dato crudo (gráfico rojo "ANTES") y **sobrevivieron a wi
 ### Bloque D — Modelado y métricas
 
 **P21. ¿Qué algoritmos se usaron y con qué hiperparámetros?**
-**Random Forest** (`n_estimators=150, max_depth=12, min_samples_split=5, class_weight='balanced', random_state=42`) y **Gradient Boosting** (`n_estimators=150, learning_rate=0.1, max_depth=5, random_state=42`). **(REPO** — `03_modelado_final.ipynb` celda 14**)**
+**Random Forest** (`n_estimators=150, max_depth=12, min_samples_split=5, class_weight='balanced', random_state=42`), **Gradient Boosting** (`n_estimators=150, learning_rate=0.1, max_depth=5, random_state=42`) y, como **baseline lineal**, una **Regresión Logística multinomial** (`C=1.0, solver='lbfgs', max_iter=3000, class_weight='balanced', random_state=42`) sobre features escaladas. **(REPO** — `03_modelado_final.ipynb` celdas 14 y 15**)**
 
-**P22. ¿Por qué modelos de árboles y no Regresión Logística?**
-Porque los árboles **no asumen ninguna distribución** de los features (no les afecta el skew ni los picos), capturan no‑linealidades e interacciones, y dan **feature importance** interpretable. La logística sí es sensible a distribuciones y necesitaría escalado. **(REPO** — comentarios celda 14; `justificacion_etl.md` nota final**)**
+**P22. ¿Por qué se agregó una Regresión Logística si los árboles son mejores?**
+Justamente para **probar** que son mejores: la logística es el **piso lineal de referencia**. El notebook lo dice: "si los árboles superan a la Regresión Logística, esto sugiere que existen **relaciones no lineales** importantes entre las variables y el método". Y lo superan: F1 Macro ≈ 0,93 (árboles) vs **0,85** (logística). Además los árboles no asumen ninguna distribución de los features (no les afecta el skew) y dan feature importance interpretable. **(REPO** — celdas 15 y 19; **(REPO‑reproducido)** las métricas**)**
 
-**P23. ¿Qué resultados dio el modelo?**
-Ambos ≈ **0,98 de accuracy** y **F1 ponderado ≈ 0,98** en test. GB algo mejor en macro F1 (0,94 vs 0,93). Mejor clase: Transit y Microlensing (F1 0,99); peor: Other(s) (F1 0,80, solo 29 casos). **(REPO** — `03_modelado_final.ipynb` celda 14**)**
+**P23. ¿Por qué se escala con `StandardScaler` SOLO para la Regresión Logística y no para los árboles?**
+Porque la logística optimiza una combinación **lineal** de los features → es sensible a la escala (una variable en miles aplasta a una en décimas y el solver converge mal). Los árboles deciden con **umbrales** ("¿x > 2,3?"), invariantes a la escala. El scaler se fitea **solo en train** para no filtrar información del test. **(REPO** — comentarios de la celda 15**; (DOMINIO)** la explicación**)**
 
-**P24. ¿Por qué usar F1 y no solo accuracy?**
-Porque con 75 % de Transit, un modelo que prediga siempre "Transit" tendría ~75 % de accuracy y sería inútil. F1 combina precisión y recall por clase (y el macro promedia clases por igual), revelando el desempeño en las minorías. **(REPO** — `03_eda.ipynb` celda 27 lo recomienda; celda 16 del modelado lo calcula**)**
+**P24. ¿Qué resultados dio el modelo?**
+Los árboles ≈ **0,98 de accuracy** y **F1 Macro ≈ 0,93** en test; la logística 0,94 de accuracy y F1 Macro 0,85. Mejor clase: Microlensing y Transit (F1 ≈ 0,99); peor: Other(s) (F1 0,80 en árboles, 0,50 en logística; solo 29 casos). **(REPO** — celda 14 guardada; logística **(REPO‑reproducido)**, su output no quedó guardado**)**
 
-**P25. ¿Hay overfitting?**
-No relevante. Diferencia accuracy train‑test ≈ **0,02** en ambos (criterio del notebook: overfitting si >0,15). **(REPO‑reproducido** — `03_modelado_final.ipynb` celda 16**)**
+**P25. ¿Por qué la métrica principal es F1 Macro y no accuracy o F1 ponderado?**
+Porque con 75 % de Transit, un modelo que prediga siempre "Transit" tendría ~75 % de accuracy y sería inútil; el F1 ponderado también queda dominado por Transit. El **F1 Macro promedia las 4 clases con el mismo peso**, así que exige rendir también en Microlensing y Others. El notebook lo explicita: "Se prioriza F1 macro porque el dataset original está desbalanceado". **(REPO** — `03_modelado_final.ipynb` celdas 17 y 19; `03_eda.ipynb` celda 27 ya lo recomendaba**)**
+
+**P25b. ¿Hay overfitting?**
+No relevante. Diferencia accuracy train‑test: RF **0,0217**, GB **0,0174**, logística **0,0235** (criterio del notebook: overfitting si >0,15). **(REPO‑reproducido** — `03_modelado_final.ipynb` celda 17**)**
+
+**P25c. ¿Cuál es el mejor modelo?**
+**RF y GB están virtualmente empatados** (F1 Macro 0,9317 vs 0,9313 en la reproducción; en los reportes guardados a 2 decimales GB muestra 0,94 vs 0,93). La respuesta defendible: ambos árboles son equivalentes y muy superiores al baseline (0,85); cuál sale primero depende de la corrida/versión. El notebook elige por `argmax(F1 Macro Test)`. **(REPO‑reproducido / DUDA** — el output de la corrida del grupo no quedó guardado**)**
 
 **P26. ¿Cuáles son las variables más importantes y qué te dice eso?**
-`sy_dist`, las magnitudes de brillo (`sy_kmag/vmag/gaiamag`), `pl_orbsmax` y los indicadores `pl_bmasse_missing`/`pl_rade_missing`. Dice que el modelo recupera los sesgos físicos (distancia→Microlensing, brillo→RV/Transit) **y** que la disponibilidad de cada medición es una huella del método. **(REPO‑reproducido** — celda 15‑17; matiz en [03](03-decisiones-y-porques.md) decisión 14**)**
+`sy_dist`, las magnitudes de brillo (`sy_kmag/vmag/gaiamag`), `pl_orbsmax` y los indicadores `pl_bmasse_missing`/`pl_rade_missing`. Dice que el modelo recupera los sesgos físicos (distancia→Microlensing, brillo→RV/Transit) **y** que la disponibilidad de cada medición es una huella del método. **(REPO‑reproducido** — celdas 16‑18; matiz en [03](03-decisiones-y-porques.md) decisión 14**)**
 
 **P27. Pregunta capciosa: ¿el modelo aprende física o aprende qué dato falta?**
 **Ambas cosas.** `sy_dist` y `pl_orbsmax` son físicas; pero `pl_bmasse_missing`/`pl_rade_missing` están en el top, y eso es señal del **proceso de medición** (Transit no mide masa, RV no mide radio). El grupo lo justifica como "ausencia informativa" del dominio; un evaluador estricto podría verlo como **leakage suave**. Respuesta honesta: es una decisión consciente y documentada; quitando los `_missing` se podría medir la física pura. **(REPO/DOMINIO/DUDA)**
 
 **P28. Si tuvieras que mejorar el trabajo, ¿qué harías?**
-Lo que sugiere el propio notebook (celda 18): GridSearch de hiperparámetros, validación cruzada k‑fold, stacking (RF+GB+SVM) y SHAP para interpretabilidad. Yo agregaría: re‑evaluar **sin** los `_missing` para aislar la física, reforzar la clase `Other(s)`, y unificar los dos ETL en uno solo. **(REPO** — celda 18; el resto **(DOMINIO))**
+Lo que sugiere el propio notebook (celda 19): GridSearchCV/RandomizedSearchCV para hiperparámetros, **validación cruzada estratificada** y **SHAP** para interpretabilidad. Yo agregaría: re‑evaluar **sin** los `_missing` para aislar la física, reforzar la clase `Other(s)`, re‑ejecutar y guardar los outputs de las celdas 15‑19, y unificar los dos ETL en uno solo. **(REPO** — celda 19; el resto **(DOMINIO))**

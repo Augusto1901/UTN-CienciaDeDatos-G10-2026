@@ -5,7 +5,7 @@
 > - **(DOMINIO)** = contexto astrofísico/estadístico que agregamos; no sale del repo.
 > - **(DUDA)** = no se pudo verificar; queda como pregunta abierta para el grupo/profesora.
 >
-> Las **métricas y feature importances de las celdas 15–18 de `03_modelado_final.ipynb` NO están guardadas en el notebook**. Para no inventar, se reprodujo el pipeline determinista del repo (`random_state=42`) con scikit‑learn 1.9.0 / imbalanced‑learn 0.14.2. Esos números se etiquetan **(REPO‑reproducido)** y coinciden con los reportes de clasificación que sí están guardados (diferencias <1 punto, atribuibles a la versión de librería). Ver detalle en [04-resultados-y-conclusiones.md](04-resultados-y-conclusiones.md).
+> Las **métricas y feature importances de las celdas 15–19 de `03_modelado_final.ipynb` NO están guardadas en el notebook** (incluida toda la **Regresión Logística**, agregada en el último commit `0c7e746` del 09‑jun‑2026). Para no inventar, se reprodujo el pipeline determinista del repo (`random_state=42`) con scikit‑learn 1.9.0 / imbalanced‑learn 0.14.2. Esos números se etiquetan **(REPO‑reproducido)** y coinciden con los reportes de clasificación que sí están guardados (diferencias <1 punto, atribuibles a la versión de librería). Ver detalle en [04-resultados-y-conclusiones.md](04-resultados-y-conclusiones.md).
 
 ---
 
@@ -32,13 +32,14 @@ La idea de fondo: cada técnica de detección tiene **sesgos físicos conocidos*
 6. **Existen DOS pipelines de preparación** (ver [02-pipeline-implementado.md](02-pipeline-implementado.md)):
    - **ETL para EDA** (`02_etl_parte2.ipynb` / `presentacion.ipynb`): imputa con **mediana global**, crea columnas `_log`, exporta `Data/processed/NASA_Exoplanet_Clean_DiscoveryMethod.csv` (42 columnas). **(REPO)**
    - **ETL para modelado** (`etl_de_cero_corregido.ipynb`, replicado dentro de `03_modelado_final.ipynb`): **split 80/20 estratificado**, **winsorización p1–p99**, **imputación KNN (k=5)** y **balanceo SMOTEENN** — todo fiteado solo en train. **(REPO)**
-7. **Modelado:** **Random Forest** y **Gradient Boosting**, entrenados sobre el train balanceado (11 591 filas) y evaluados sobre el test real (1152 filas). **(REPO** — `03_modelado_final.ipynb` celda 14**)**
+7. **Modelado:** **Random Forest** y **Gradient Boosting** + un **baseline de Regresión Logística multinomial** (con `StandardScaler`, agregado en el último commit), entrenados sobre el train balanceado (11 591 filas) y evaluados sobre el test real (1152 filas). La métrica de selección es **F1 Macro** (mismo peso a las 4 clases). **(REPO** — `03_modelado_final.ipynb` celdas 14, 15 y 17**)**
 
 ## Resultados
 
-- **Accuracy en test ≈ 0,98** para ambos modelos; **F1 ponderado ≈ 0,98**. **(REPO** — celda 14**)**
+- **Accuracy en test ≈ 0,98** para RF y GB; **F1 Macro ≈ 0,93** (virtualmente empatados). **(REPO** — celda 14; comparación **(REPO‑reproducido))**
+- El **baseline lineal queda muy por debajo: F1 Macro 0,85** → hay relaciones no lineales entre features y método, lo que justifica usar árboles. **(REPO‑reproducido**; argumento en celda 19 **(REPO))**
 - La clase fácil es **Transit** (F1 0,99); la más difícil es **Other(s)** (F1 ≈ 0,80, solo 29 casos). **(REPO** — celda 14**)**
-- Sin overfitting relevante: diferencia train‑test ≈ 0,02 en ambos. **(REPO‑reproducido)**
+- Sin overfitting relevante: diferencia train‑test ≤ 0,024 en los tres. **(REPO‑reproducido)**
 - Variables más predictivas (Random Forest): **`sy_dist`, magnitudes de brillo (`sy_kmag/vmag/gaiamag`), `pl_orbsmax` y los indicadores `pl_bmasse_missing`/`pl_rade_missing`**. **(REPO‑reproducido)** — matiz importante discutido en [03-decisiones-y-porques.md](03-decisiones-y-porques.md).
 
 ## Conclusión en una frase

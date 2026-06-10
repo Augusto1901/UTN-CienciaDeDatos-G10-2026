@@ -86,20 +86,25 @@ Objetivo: validar estadísticamente las hipótesis de sesgo físico. **(REPO** �
 
 ---
 
-## D. Modelado — `03_modelado_final.ipynb` celdas 14‑18
+## D. Modelado — `03_modelado_final.ipynb` celdas 14‑19
+
+> **Última modificación del repo (commit `0c7e746`, 09‑jun‑2026, "Agregue regresion Logistica para comparar"):** se agregó una **Regresión Logística multinomial como baseline lineal** (celda 15) y la comparación pasó de 2 a **3 modelos**, con **F1 Macro como métrica principal**. **(REPO** — `git log`; celdas 15, 17 y 19**)**
 
 | Paso | Celda | Detalle |
 |---|---|---|
-| Definición de modelos | 14 | **RandomForest**(`n_estimators=150, max_depth=12, min_samples_split=5, class_weight='balanced', random_state=42`) y **GradientBoosting**(`n_estimators=150, learning_rate=0.1, max_depth=5, random_state=42`) **(REPO)** |
-| Entrenamiento | 14 | `.fit(X_train_bal, y_train_bal)` (train balanceado, 11 591 filas) **(REPO)** |
-| Evaluación | 14 | `.predict(X_test)` sobre el test real (1152 filas) + `classification_report` **(REPO — outputs guardados)** |
-| Matriz de confusión RF | 15 | `confusion_matrix` + `feature_importances_` top‑15 **(REPO — código; output NO guardado)** |
-| Comparación + overfitting | 16 | Accuracy train vs test, F1/Precision/Recall ponderados **(REPO — código; output NO guardado)** |
-| Feature importance comparada | 17 | RF vs GB + matriz GB + reportes con 4 decimales **(REPO — código; output NO guardado)** |
-| Conclusiones | 18 | Texto generado con f‑strings **(REPO — código; output NO guardado)** |
+| Definición y entrenamiento RF/GB | 14 | **RandomForest**(`n_estimators=150, max_depth=12, min_samples_split=5, class_weight='balanced', random_state=42`) y **GradientBoosting**(`n_estimators=150, learning_rate=0.1, max_depth=5, random_state=42`); `.fit(X_train_bal, y_train_bal)` (11 591 filas) y `classification_report` sobre el test real (1152 filas) **(REPO — outputs guardados)** |
+| **Baseline: Regresión Logística** | 15 | `LogisticRegression(C=1.0, max_iter=3000, solver='lbfgs', class_weight='balanced', random_state=42)` sobre features **escaladas con `StandardScaler`** (fit solo en train) **(REPO — código; output NO guardado)** |
+| Matriz de confusión RF + feature importance | 16 | `confusion_matrix` (RF) + `feature_importances_` top‑15 **(REPO — código; output NO guardado)** |
+| Comparación de 3 modelos + overfitting | 17 | Accuracy train/test, **F1 Macro**, F1 ponderado, precision/recall ponderados; elige el "mejor modelo" por `argmax(F1 Macro Test)` **(REPO — código; output NO guardado)** |
+| Feature importance RF vs GB + 3 matrices de confusión + reportes (4 decimales) | 18 | **(REPO — código; output NO guardado)** |
+| Conclusiones | 19 | Texto generado con f‑strings: mejor modelo por F1 Macro, diferencias train‑test de los 3, rol del baseline lineal **(REPO — código; output NO guardado)** |
 
-> **Las celdas 15‑18 no tienen output guardado en el `.ipynb`.** Sus números (feature importance, overfitting, matrices) fueron **reproducidos** ejecutando el mismo código determinista; ver [04-resultados-y-conclusiones.md](04-resultados-y-conclusiones.md). Los reportes de la celda 14 **sí** están guardados y son la fuente primaria de las métricas. **(REPO)**
+> **Las celdas 15‑19 no tienen output guardado en el `.ipynb`** (el commit que agregó la Regresión Logística se guardó sin ejecutar esas celdas). Sus números (comparación, feature importance, matrices) fueron **reproducidos** ejecutando el mismo código determinista; ver [04-resultados-y-conclusiones.md](04-resultados-y-conclusiones.md). Los reportes de la celda 14 (RF y GB) **sí** están guardados y son la fuente primaria. **(REPO)**
+
+### Por qué un baseline lineal (celda 19, texto del repo)
+"Si los árboles superan a la Regresión Logística, esto sugiere que existen **relaciones no lineales** importantes entre las variables y el método de descubrimiento." **(REPO** — celda 19**)** La reproducción lo confirma: F1 Macro ≈ 0,93 (árboles) vs **0,85** (logística). **(REPO‑reproducido)**
 
 ## E. Tecnologías
-`pandas`, `numpy`, `matplotlib`, `seaborn`, `scipy.stats`, `scikit-learn` (`KNNImputer`, `train_test_split`, `LabelEncoder`, `RandomForestClassifier`, `GradientBoostingClassifier`, métricas) e `imbalanced-learn` (`SMOTEENN`). **(REPO** — imports de cada notebook + `requirements.txt`**)**
+
+`pandas`, `numpy`, `matplotlib`, `seaborn`, `scipy.stats`, `scikit-learn` (`KNNImputer`, `train_test_split`, `LabelEncoder`, `StandardScaler`, `RandomForestClassifier`, `GradientBoostingClassifier`, `LogisticRegression`, métricas) e `imbalanced-learn` (`SMOTEENN`). **(REPO** — imports de cada notebook + `requirements.txt`**)**
 > ⚠️ `imbalanced-learn` (imblearn) **no figura en `requirements.txt`** aunque es necesario para correr el ETL/modelado. Es un hueco a corregir (ver [05-preguntas-y-respuestas.md](05-preguntas-y-respuestas.md) y lista final). **(REPO** — `requirements.txt`**)**

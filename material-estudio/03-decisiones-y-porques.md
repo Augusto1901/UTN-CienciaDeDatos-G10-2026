@@ -79,8 +79,17 @@ Al reproducir las feature importances (no guardadas), los **predictores top no s
 
 **Punto defendible (y posible crítica de la profesora):** parte de la exactitud viene de **qué medición está disponible** (los `_missing`), que es un rasgo del **proceso instrumental**, no una propiedad física pura del planeta. El grupo lo justifica como "ausencia informativa" legítima del dominio (celda 6 de la justificación), pero un evaluador estricto podría llamarlo **leakage suave**. La respuesta honesta: es una decisión consciente y documentada; si se quisiera medir solo la física pura, se podrían quitar los `_missing` y volver a evaluar. **(REPO/DOMINIO/DUDA)**
 
-## 15. Elección de algoritmos: Random Forest + Gradient Boosting
+## 15. Elección de algoritmos: Random Forest + Gradient Boosting + baseline de Regresión Logística
 **Por qué modelos de árboles:** **no asumen ninguna distribución** en los features (no les molesta el skew ni los picos), manejan no‑linealidades e interacciones, y dan **feature importance** interpretable — clave para "leer" qué física aprendió el modelo. **(REPO** — comentarios celda 14; `justificacion_etl.md` nota final**)**
 - **Random Forest:** muchos árboles en paralelo (bagging), robusto a varianza. `max_depth=12` y `min_samples_split=5` limitan el overfitting; `class_weight='balanced'` compensa desbalances residuales tras SMOTEENN. **(REPO)**
 - **Gradient Boosting:** árboles secuenciales que corrigen el error del anterior. `max_depth=5` (menor que RF) porque boosting tiende más al overfitting; `learning_rate=0.1` controla cuánto corrige cada árbol. **(REPO)**
-**Por qué dos modelos:** para **comparar** y elegir el mejor por F1, y contrastar sus feature importances. **(REPO** — celda 16‑17**)**
+- **Regresión Logística multinomial (baseline, agregada en el último commit):** `C=1.0, solver='lbfgs', max_iter=3000, class_weight='balanced'`. Funciona como **piso lineal de referencia**: "si los árboles superan a la Regresión Logística, esto sugiere que existen relaciones no lineales importantes entre las variables y el método". **(REPO** — celdas 15 y 19 de `03_modelado_final.ipynb`**)** La reproducción lo confirma: F1 Macro 0,85 (logística) vs ≈0,93 (árboles). **(REPO‑reproducido)**
+
+**Por qué tres modelos:** para **comparar contra un baseline** y elegir el mejor por **F1 Macro**, y contrastar las feature importances de los dos modelos de árboles. **(REPO** — celdas 17‑18**)**
+
+## 16. Escalado con `StandardScaler` SOLO para la Regresión Logística
+**Por qué la logística sí y los árboles no:** la Regresión Logística optimiza coeficientes sobre combinaciones lineales de los features → **es sensible a la escala** (una variable en miles dominaría a una en décimas y el solver converge mal). Los árboles deciden con umbrales ("¿x > 2,3?"), que son **invariantes a la escala**, así que escalar no les cambia nada. **(REPO** — comentario en celda 15: "La Regresión Logística es sensible a la escala de las variables"**; (DOMINIO)** la explicación**)**
+**Por qué fit solo en train:** el scaler aprende media y desvío de los datos → fitearlo con el dataset completo filtraría información del test (mismo principio que KNN/winsorización/SMOTEENN). **(REPO** — celda 15: "El scaler se ajusta SOLO con train para evitar data leakage"**)**
+
+## 17. F1 Macro como métrica principal de selección
+**Por qué F1 Macro y no accuracy ni F1 ponderado:** el test mantiene el desbalance real (Transit 75 %). El accuracy y el F1 ponderado quedan dominados por Transit; el **F1 Macro promedia las 4 clases con el mismo peso**, así que castiga a un modelo que falle en Microlensing u Others aunque clave Transit. El notebook lo dice explícito: "Se prioriza F1 macro porque el dataset original está desbalanceado" y "da la misma importancia a Transit, Radial Velocity, Microlensing y Others". **(REPO** — celdas 17 y 19 de `03_modelado_final.ipynb`; ya lo anticipaba `03_eda.ipynb` celda 27**)**

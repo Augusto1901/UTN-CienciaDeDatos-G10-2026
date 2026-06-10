@@ -49,6 +49,9 @@
 - **SMOTEENN** — Combinación SMOTE (genera) + ENN (limpia). Solo en train. **(REPO)**
 - **Random Forest** — Conjunto de muchos árboles de decisión en **paralelo** (bagging); promedia sus votos. **(REPO/DOMINIO)**
 - **Gradient Boosting** — Árboles **secuenciales**, cada uno corrige el error del anterior. **(REPO/DOMINIO)**
+- **Regresión Logística (multinomial)** — Modelo **lineal** de clasificación: estima la probabilidad de cada clase con una combinación lineal de los features. Aquí se usa como **baseline**. **(REPO/DOMINIO)**
+- **Baseline** — Modelo simple de referencia; si los modelos complejos no lo superan, la complejidad no se justifica. Aquí el baseline lineal pierde por mucho (F1 Macro 0,85 vs 0,93) → hay relaciones no lineales. **(REPO/DOMINIO)**
+- **StandardScaler / escalado** — Resta la media y divide por el desvío de cada feature (z‑score). Necesario para modelos lineales (sensibles a la escala); irrelevante para árboles (deciden por umbrales). Se fitea solo en train. **(REPO/DOMINIO)**
 - **`class_weight='balanced'`** — Penaliza más equivocarse en clases chicas; compensa desbalance residual. **(REPO)**
 - **Feature importance** — Cuánto aporta cada variable a las predicciones del árbol/bosque. **(REPO)**
 - **Matriz de confusión** — Tabla real vs predicho; la diagonal son los aciertos. **(REPO)**
